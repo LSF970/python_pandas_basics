@@ -638,7 +638,294 @@ Years
 2020    NaN     NaN     NaN     NaN
 2021    NaN     NaN     NaN     NaN
 ```
-### Data Alignment - Got to here
+### Data Alignment
+- We can add Series and columns in DataFrames together.
+- Since Series are made up of singular columns, it is easy to add them together, with DataFrames there is an additional step of specifying the column to add.
+- These examples will add DataFrame columns (Note that for Series, this will work the same, without having to input the column names).
+
+#### Adding two columns in one Dataframe
+```python
+print(new_df["East"] + new_df["North"])
+```
+#### Output
+```python
+Years
+2017    4200.0
+2018    5900.0
+2019       NaN
+2020       NaN
+2021       NaN
+dtype: float64
+```
+We can use .add to be able to specify a fill value for NaN.
+2019 will now have a value because the NaN in one of the columns was filled to 0.
+Results of two NaN columns will remain as NaN.
+```python
+print(new_df["East"].add(new_df["North"], fill_value=0))
+```
+#### Output
+```python
+Years
+2017    4200.0
+2018    5900.0
+2019    4000.0
+2020       NaN
+2021       NaN
+dtype: float64
+```
+### Sorting and Ranking
+
+#### Sorting by index - ascending: 1 True, 0 False
+```python
+print(new_df.sort_index(ascending=0))
+```
+#### Output
+```python
+         East    West   North   South
+Years
+2021      NaN     NaN     NaN     NaN
+2020      NaN     NaN     NaN     NaN
+2019      NaN  3500.0  4000.0  4000.0
+2018   3400.0  2400.0  2500.0  2500.0
+2017   1200.0  1300.0  3000.0  3000.0
+```
+### Sorting by column
+Default is ascending, to change, add the parameter like in the previous example.
+```python
+print(new_df.sort_values(by=["North"]))
+```
+#### Output
+```python
+         East    West   North   South
+Years
+2018   3400.0  2400.0  2500.0  2500.0
+2017   1200.0  1300.0  3000.0  3000.0
+2019      NaN  3500.0  4000.0  4000.0
+2020      NaN     NaN     NaN     NaN
+2021      NaN     NaN     NaN     NaN
+```
+### Ranking columns
+First we need to specify the column, and then we can apply the rank function to it.
+```python
+print(new_df["North"].rank(ascending=0))
+```
+#### Output
+```python
+Years
+2017    2.0
+2018    3.0
+2019    1.0
+2020    NaN
+2021    NaN
+Name: North, dtype: float64
+```
+We can save the rank as a new column if needed.
+```python
+new_df["rank_north"] = new_df["North"].rank(ascending=0)
+print(new_df)
+```
+#### Output
+```python
+         East    West   North   South  rank_north
+Years
+2017   1200.0  1300.0  3000.0  3000.0         2.0
+2018   3400.0  2400.0  2500.0  2500.0         3.0
+2019      NaN  3500.0  4000.0  4000.0         1.0
+2020      NaN     NaN     NaN     NaN         NaN
+2021      NaN     NaN     NaN     NaN         NaN
+```
+## Summary Statistics
+
+### Describe
+Probably the most useful - gives us general summary statistics for entire DataFrame.
+```python
+print(new_df.describe())
+```
+#### Output
+```python
+              East    West        North        South  rank_north
+count     2.000000     3.0     3.000000     3.000000         3.0
+mean   2300.000000  2400.0  3166.666667  3166.666667         2.0
+std    1555.634919  1100.0   763.762616   763.762616         1.0
+min    1200.000000  1300.0  2500.000000  2500.000000         1.0
+25%    1750.000000  1850.0  2750.000000  2750.000000         1.5
+50%    2300.000000  2400.0  3000.000000  3000.000000         2.0
+75%    2850.000000  2950.0  3500.000000  3500.000000         2.5
+max    3400.000000  3500.0  4000.000000  4000.000000         3.0
+```
+### Finding the totals of all columns
+```python
+print(new_df.sum())
+```
+#### Output
+```python
+East          4600.0
+West          7200.0
+North         9500.0
+South         9500.0
+rank_north       6.0
+dtype: float64
+```
+### Cumulative Sum
+```python
+print(new_df.cumsum())
+```
+#### Output
+```python
+         East    West   North   South  rank_north
+Years
+2017   1200.0  1300.0  3000.0  3000.0         2.0
+2018   4600.0  3700.0  5500.0  5500.0         5.0
+2019      NaN  7200.0  9500.0  9500.0         6.0
+2020      NaN     NaN     NaN     NaN         NaN
+2021      NaN     NaN     NaN     NaN         NaN
+```
+### Minimum values in each column
+```python
+print(new_df.min())
+```
+#### Output
+```python
+East          1200.0
+West          1300.0
+North         2500.0
+South         2500.0
+rank_north       1.0
+dtype: float64
+```
+### Maximum values in each column
+```python
+print(new_df.max())
+```
+#### Output
+```python
+East          3400.0
+West          3500.0
+North         4000.0
+South         4000.0
+rank_north       3.0
+dtype: float64
+```
+## Index Hierarchy
+
+Creating a DataFrame with a hierarchical index.
+We are using numpy arange to create a range of numbers, and re-shaping it so that the numbers will fit on a 4x4 grid.
+
+```python
+df_temp = DataFrame(np.arange(16).reshape(4,4), index = [["2018", "2018", "2019", "2019"], ["Jan", "Feb", "Jan", "Feb"]], columns= [["NY", "NY", "LA", "LA"], ["Cold", "Hot", "Cold", "Hot"]])
+print(df_temp)
+```
+#### Output
+```python
+           NY       LA
+         Cold Hot Cold Hot
+2018 Jan    0   1    2   3
+     Feb    4   5    6   7
+2019 Jan    8   9   10  11
+     Feb   12  13   14  15
+```
+#### We can add index and columns names
+```python
+df_temp.index.names=["Year", "Month"]
+df_temp.columns.names=["State", "Temp"]
+print(df_temp)
+```
+#### Output
+```python
+State        NY       LA
+Temp       Cold Hot Cold Hot
+Year Month
+2018 Jan      0   1    2   3
+     Feb      4   5    6   7
+2019 Jan      8   9   10  11
+     Feb     12  13   14  15
+```
+Using swaplevel to swap levels on a particular axis.
+
+axis - 0 or Ã¢Â€Â˜indexÃ¢Â€Â™, 1 or Ã¢Â€Â˜columnsÃ¢Â€Â™
+```python
+print(df_temp.swaplevel("State", "Temp", axis=1))
+```
+#### Output
+```python
+Temp       Cold Hot Cold Hot
+State        NY  NY   LA  LA
+Year Month
+2018 Jan      0   1    2   3
+     Feb      4   5    6   7
+2019 Jan      8   9   10  11
+     Feb     12  13   14  15
+```
+### Sorting based on the first level of the index
+```python
+print(df_temp.sort_index(level=0))
+```
+#### Output
+```python
+State        NY       LA
+Temp       Cold Hot Cold Hot
+Year Month
+2018 Feb      4   5    6   7
+     Jan      0   1    2   3
+2019 Feb     12  13   14  15
+     Jan      8   9   10  11
+```
+### Sorting by the second level of the index
+```python
+print(df_temp.sort_index(level=1))
+```
+#### Output
+```python
+	State	NY	LA
+Temp	Cold	Hot	Cold	Hot
+Year	Month
+2018	Feb	4	5	6	7
+2019	Feb	12	13	14	15
+2018	Jan	0	1	2	3
+2019	Jan	8	9	10	11
+```
+### Accessing single columns in a multi-index, note there is no comma
+```python
+print(df_temp["NY"]["Cold"])
+```
+#### Output
+```python
+Year  Month
+2018  Jan       0
+      Feb       4
+2019  Jan       8
+      Feb      12
+Name: Cold, dtype: int32
+```
+### Accessing single columns
+We can still use iloc with a multi-index
+```python
+print(df_temp.iloc[0])
+```
+#### Output
+```python
+State  Temp
+NY     Cold    0
+       Hot     1
+LA     Cold    2
+       Hot     3
+Name: (2018, Jan), dtype: int32
+```
+### This is how we can use loc
+```python
+print(df_temp.loc["2018", "Jan"])
+```
+#### Output
+```python
+State  Temp
+NY     Cold    0
+       Hot     1
+LA     Cold    2
+       Hot     3
+Name: (2018, Jan), dtype: int32
+```
+# End of tutorial, you now know all you need to about pandas! 
+
 
 
 
